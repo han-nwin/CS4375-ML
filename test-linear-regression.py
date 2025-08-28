@@ -6,16 +6,31 @@ import numpy as np
 # X: square footage, y: price ($1000s)
 X = np.array([500, 750, 1000, 1250, 1500, 2000, 2500, 3000, 3500], dtype=float).reshape(
     -1, 1
-)
+)  # Reshape the 1D array into a 2D column vector with one feature per row
 y = np.array([150, 195, 240, 270, 300, 360, 420, 470, 520], dtype=float)
 
 # Train/validation split
-rng = np.random.default_rng(42)
-idx = rng.permutation(len(X))
-split = int(0.8 * len(X))
-train_idx, val_idx = idx[:split], idx[split:]
-X_train, y_train = X[train_idx], y[train_idx]
-X_val, y_val = X[val_idx], y[val_idx]
+rng = np.random.default_rng(
+    42
+)  # Create a random number generator with a fixed seed for reproducibility
+idx = rng.permutation(
+    len(X)
+)  # Generate a random permutation of indices from 0 to len(X)-1
+split = int(
+    0.8 * len(X)
+)  # Calculate the index to split data into 80% training and 20% validation
+train_idx, val_idx = (
+    idx[:split],
+    idx[split:],
+)  # Split the indices into training and validation sets
+X_train, y_train = (
+    X[train_idx],
+    y[train_idx],
+)  # Select training samples and corresponding targets
+X_val, y_val = (
+    X[val_idx],
+    y[val_idx],
+)  # Select validation samples and corresponding targets
 
 
 # ----------------------------
@@ -31,6 +46,9 @@ def standardize(X):
 
 def add_bias(X):
     """Add a column of ones for the intercept term."""
+    # np.c_ is a convenient way to concatenate along the second axis (columns).
+    # Here, it concatenates a column of ones with the input matrix X,
+    # effectively adding a bias (intercept) term to the features.
     return np.c_[np.ones((X.shape[0], 1)), X]
 
 
