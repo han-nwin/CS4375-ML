@@ -1,3 +1,4 @@
+import sys
 import matplotlib.pyplot as plt
 
 
@@ -28,8 +29,6 @@ def plot_data_from_file(filename):
     plt.grid(True)
     plt.show()
 
-
-import sys
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
