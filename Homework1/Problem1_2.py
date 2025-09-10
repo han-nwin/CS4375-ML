@@ -1,7 +1,7 @@
 import numpy as np
 
 
-def subgradient_descent(X, y, epsilon=1e-6, max_iters=int(1e5)):
+def subgradient_descent(X, y, epsilon=1e-6, max_iters=int(1e3)):
     """
     Subgradient descent for the given absolute loss function.
     Input:
@@ -24,6 +24,25 @@ def subgradient_descent(X, y, epsilon=1e-6, max_iters=int(1e5)):
     b = 1.0
 
     for t in range(1, max_iters + 1):
+
+        """Sum form"""
+        # g_a = np.zeros(n)
+        # g_b = 0.0
+        # for i in range(m):
+        #     r_i = float(np.dot(a, X[i]) + b - y[i])
+        #     s_i = np.sign(r_i)  # sign(r_i), with sign(0)=0
+        #
+        #     g_a += s_i * X[i]  # add x^(i) * sign(r_i)
+        #     g_b += s_i  # add sign(r_i)
+        #
+        # # subgradient norm limit checking
+        # norm = np.sqrt(np.linalg.norm(g_a) ** 2 + g_b**2)
+        # if norm <= epsilon:
+        #     print(f"Stopped at iteration {t}, norm={norm:.2e}")
+        #     break
+        #
+
+        """ Matrix form """
         # Preps
         r = X @ a + b - y
         s = np.sign(r)
@@ -31,12 +50,6 @@ def subgradient_descent(X, y, epsilon=1e-6, max_iters=int(1e5)):
         # subgradient
         g_a = X.T @ s
         g_b = s.sum()
-
-        # subgradient norm limit checking
-        norm = np.sqrt(np.linalg.norm(g_a) ** 2 + g_b**2)
-        if norm <= epsilon:
-            print(f"Stopped at iteration {t}, norm={norm:.2e}")
-            break
 
         # step size: 1 / (1 + sqrt(t))
         gamma = 1 / (1 + np.sqrt(t))
