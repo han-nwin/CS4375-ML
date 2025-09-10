@@ -1,7 +1,7 @@
 import numpy as np
 
 
-def l1_subgradient_descent(X, y, epsilon=1e-6, max_iters=1000):
+def l1_subgradient_descent(X, y, epsilon=1e-6, max_iters=1e8):
     """
     Subgradient descent for the given absolute loss function.
     Input:
@@ -10,7 +10,7 @@ def l1_subgradient_descent(X, y, epsilon=1e-6, max_iters=1000):
         epsilon : float, stopping tolerance on subgradient norm
         max_iters : int, safeguard maximum iterations
     Output:
-        theta : (n+1,) vector [a; b]
+        (n+1,) vector [a; b]
     """
     X = np.array(X, dtype=float)
     y = np.array(y, dtype=float)
@@ -26,9 +26,9 @@ def l1_subgradient_descent(X, y, epsilon=1e-6, max_iters=1000):
         g_b = s.sum()  # scalar
 
         # compute subgradient norm
-        grad_norm = np.sqrt(np.linalg.norm(g_a) ** 2 + g_b**2)
-        if grad_norm <= epsilon:
-            print(f"Stopped at iteration {t}, grad_norm={grad_norm:.2e}")
+        norm = np.sqrt(np.linalg.norm(g_a) ** 2 + g_b**2)
+        if norm <= epsilon:
+            print(f"Stopped at iteration {t}, grad_norm={norm:.2e}")
             break
 
         # step size: 1 / (1 + sqrt(t))
@@ -39,16 +39,15 @@ def l1_subgradient_descent(X, y, epsilon=1e-6, max_iters=1000):
         b = b - alpha * g_b
 
         # debug print
-        print(f"iter={t}, a={a}, b={b}, grad_norm={grad_norm:.4e}")
+        print(f"iter={t}, a={a}, b={b}, norm={norm:.4e}")
 
     return np.concatenate([a, [b]])
 
 
 # Example run
-theta = l1_subgradient_descent(
+result = l1_subgradient_descent(
     [[1, 2, 3], [1, 1, 1], [2, 2, 2], [3, 3, 3]],
     [6, 3, 6, 9],
-    epsilon=1e-100,
-    max_iters=10000000,
+    epsilon=1e-6,
 )
-print("Final [a; b] =", theta)
+print("Final [a; b] =", result)
