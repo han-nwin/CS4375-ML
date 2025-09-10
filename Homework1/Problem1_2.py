@@ -37,7 +37,7 @@ def subgradient_descent(X, y):
         #     g_a += s_i * X[i]  # add x^(i) * sign(r_i)
         #     g_b += s_i  # add sign(r_i)
 
-        """ Matrix form """
+        """ Matrix form - more effiecient"""
         # Preps
         r = X @ a + b - y
         s = np.sign(r)  # sign(0) = 0
