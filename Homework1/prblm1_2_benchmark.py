@@ -51,6 +51,7 @@ print("Your subgradient [a; b] =", params)
 lad = QuantileRegressor(quantile=0.5, alpha=0.0, solver="highs")
 lad.fit(X, y)
 print("QuantileRegressor coef_ =", lad.coef_, "intercept_ =", lad.intercept_)
+print(f"predict {lad.predict([[2,3,4]])}")
 
 # ==== Run scikit-learn OLS (L2 loss) ====
 ols = LinearRegression()
