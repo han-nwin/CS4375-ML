@@ -1,7 +1,7 @@
 import numpy as np
 
 
-def stochastic_subgradient_descent(X, y, iters=10**5, step_sizes=[1]):
+def perceptron_subgradient_descent(X, y, iters=10**5, step_sizes=[1]):
     M, n = X.shape
 
     # feature map
@@ -69,7 +69,7 @@ def load_data(path):
 if __name__ == "__main__":
     X, y = load_data("perceptron.data")
     step_sizes = [10**-10, 1, 10**10]
-    results = stochastic_subgradient_descent(X, y, step_sizes=step_sizes)
+    results = perceptron_subgradient_descent(X, y, step_sizes=step_sizes)
 
     for step_size, logs in results.items():
         print(f"Step size: {step_size}")

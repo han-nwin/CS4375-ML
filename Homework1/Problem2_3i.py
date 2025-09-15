@@ -1,7 +1,7 @@
 import numpy as np
 
 
-def standard_subgradient_descent(X, y, iters=10**5):
+def perceptron_subgradient_descent(X, y, iters=10**5):
     M, n = X.shape
 
     # feature map
@@ -63,7 +63,7 @@ def load_data(path):
 # run
 if __name__ == "__main__":
     X, y = load_data("perceptron.data")
-    logs = standard_subgradient_descent(X, y)
+    logs = perceptron_subgradient_descent(X, y)
 
     for t, w, b in logs:
         print(f"iter {t}: w={w}, b={b}")
