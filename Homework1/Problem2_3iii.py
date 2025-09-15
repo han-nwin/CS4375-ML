@@ -17,20 +17,28 @@ def stochastic_subgradient_descent(X, y, iters=10**5, step_sizes=[1]):
         w = np.zeros(n + 1)
         b = 0.0
 
-        iter_stops = set(range(5000, 6000, 10))
+        iter_stops = set(range(100, 1000, 10))
         logs = []
 
         for t in range(1, iters + 1):
-            # determine i
-            i = (t - 1) % M  # Use modulo to cycle through samples
+            # compute g_w g_b
+            g_w = np.zeros(n + 1)  # n=3 since φ maps to R^3
+            g_b = 0.0
 
-            f_i = w @ phi[i] + b
+            # sum
+            for i in range(M):
+                f_i = w @ phi[i] + b
+                # check condition
+                if y[i] * f_i <= 0:  # misclassified
+                    g_w += -y[i] * phi[i]
+                    g_b += -y[i]
 
-            # check condition
-            if y[i] * f_i <= 0:  # misclassified
-                w = w + y[i] * step_size * phi[i]  # since k = 1 -> 1/k = 1
+            g_w /= -M  # * -1/M
+            g_b /= -M  # * -1/M
 
-                b = b + step_size * y[i]
+            # Updates with step size = 1
+            w = w + g_w * step_size
+            b = b + g_b * step_size
 
             # add to logs every iter stop
             if t in iter_stops:
