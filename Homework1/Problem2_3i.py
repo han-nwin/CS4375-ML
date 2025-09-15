@@ -14,7 +14,7 @@ def standard_subgradient_descent(X, y, iters=10**5):
     w = np.zeros(n + 1)
     b = 0.0
 
-    inter_stops = {1, 10, 100, 10**3, 10**4, 10**5}
+    iter_stops = {1, 10, 100, 10**3, 10**4, 10**5}
     logs = []
 
     for t in range(1, iters + 1):
@@ -38,7 +38,7 @@ def standard_subgradient_descent(X, y, iters=10**5):
         b = b + g_b
 
         # add to logs every iter stop
-        if t in inter_stops:
+        if t in iter_stops:
             logs.append((t, w.copy(), b))
 
     return logs

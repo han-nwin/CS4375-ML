@@ -14,12 +14,12 @@ def stochastic_subgradient_descent(X, y, iters=10**5):
     w = np.zeros(n + 1)
     b = 0.0
 
-    inter_stops = {1, 10, 100, 10**3, 10**4, 10**5}
+    iter_stops = {1, 10, 100, 10**3, 10**4, 10**5}
     logs = []
 
     for t in range(1, iters + 1):
         # determine i
-        i = (t - 1) % M  # Use modulo to cycle through samples
+        i = (t - 1) % M  # Use mod to cycle through samples
 
         f_i = w @ phi[i] + b
 
@@ -29,7 +29,7 @@ def stochastic_subgradient_descent(X, y, iters=10**5):
             b = b + 1 * y[i]
 
         # add to logs every iter stop
-        if t in inter_stops:
+        if t in iter_stops:
             logs.append((t, w.copy(), b))
 
     return logs
