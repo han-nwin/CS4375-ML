@@ -1,7 +1,7 @@
 import numpy as np
 
 
-def standard_subgradient_descent(X, y, iters=10**5):
+def stochastic_subgradient_descent(X, y, iters=10**5):
     M, n = X.shape
 
     # feature map
@@ -18,24 +18,15 @@ def standard_subgradient_descent(X, y, iters=10**5):
     logs = []
 
     for t in range(1, iters + 1):
-        # compute g_w g_b
-        g_w = np.zeros(n + 1)  # n=3 since φ maps to R^3
-        g_b = 0.0
+        # determine i
+        i = (t - 1) % M  # Use modulo to cycle through samples
 
-        # sum
-        for i in range(M):
-            f_i = w @ phi[i] + b
-            # check condition
-            if y[i] * f_i <= 0:  # misclassified
-                g_w += -y[i] * phi[i]
-                g_b += -y[i]
+        f_i = w @ phi[i] + b
 
-        g_w /= -M  # * -1/M
-        g_b /= -M  # * -1/M
-
-        # Updates with step size = 1
-        w = w + g_w
-        b = b + g_b
+        # check condition
+        if y[i] * f_i <= 0:  # misclassified
+            w = w + y[i] * 1 * phi[i]  # since k = 1 -> 1/k = 1
+            b = b + 1 * y[i]
 
         # add to logs every iter stop
         if t in inter_stops:
@@ -63,7 +54,7 @@ def load_data(path):
 # run
 if __name__ == "__main__":
     X, y = load_data("perceptron.data")
-    logs = standard_subgradient_descent(X, y)
+    logs = stochastic_subgradient_descent(X, y)
 
     for t, w, b in logs:
         print(f"iter {t}: w={w}, b={b}")
