@@ -10,7 +10,7 @@ def perceptron_subgradient_descent(X, y, iters=10**5):
         x1, x2 = X[i]
         phi[i] = [x1, x2, x1**2 + x2**2]
 
-    # vector of zeros with length n+1 (ie x1, x2 -> x1, x2, x1^2, x2^2)
+    # vector of zeros with length n+1 (ie x1, x2 -> x1, x2, x1^2 + x2^2)
     w = np.zeros(n + 1)
     b = 0.0
 
@@ -19,7 +19,7 @@ def perceptron_subgradient_descent(X, y, iters=10**5):
 
     for t in range(1, iters + 1):
         # compute g_w g_b
-        g_w = np.zeros(n + 1)  # n=3 since φ maps to R^3
+        g_w = np.zeros(n + 1)  # n=3 since phi maps to R^3
         g_b = 0.0
 
         # sum
