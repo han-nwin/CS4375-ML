@@ -11,8 +11,8 @@ model = {}  # {"w": ..., "b": ...}
 # Quadratic feature map phi(x)
 def phi_quad(X):
     """
-    X: (n,4) raw inputs
-    return Phi: (n,d) quadratic features
+    X: raw inputs
+    return Phi: quadratic features
     """
     x1, x2, x3, x4 = X[:, 0], X[:, 1], X[:, 2], X[:, 3]
     Phi = np.column_stack(
