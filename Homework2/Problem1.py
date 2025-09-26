@@ -56,30 +56,42 @@ def phi_quad(X):
 
 
 # -----------------------------
-# Hard-margin primal SVM (QP)
+# Primal SVM (Quadratic Programming)
 # -----------------------------
-def fit_primal_hard_margin(Phi, y, solver_opts=None):
+def fit_primal(Phi, y):
     """
-    Hard-margin SVM:
-      min_{w,b} 0.5||w||^2
-      such that: y_i (w^T phi_i + b) >= 1
-    Decision vector z = [w (d), b (1)]
+    Hard-Margin SVM (Primal Form):
+      min_{w,b}  0.5 * ||w||^2
+      subject to y_i * (w^T phi_i + b) >= 1,  for all i
+
+    Decision variable: z = [w (n-dim), b (scalar)]
     """
-    n, d = Phi.shape
-    D = d + 1
 
-    H = np.zeros((D, D), dtype=np.float64)
-    H[:d, :d] = np.eye(d, dtype=np.float64)
-    f = np.zeros(D, dtype=np.float64)
+    # Number of samples (M) and feature dimension (n)
+    M, n = Phi.shape
 
-    # Constraints: -y_i*(phi_i^T w + b) <= -1
-    G = np.zeros((n, D), dtype=np.float64)
-    h = -np.ones(n, dtype=np.float64)
-    for i in range(n):
+    # 1. Build quadratic program terms
+    H = np.zeros((n + 1, n + 1), dtype=np.float64)
+    # Create identity matrix for quadratic term in objective (0.5 * w^T w)
+    H[:n, :n] = np.eye(n, dtype=np.float64)
+
+    # Linear term f (size n+1):
+    # - All zeros since we has no linear term
+    f = np.zeros(n + 1, dtype=np.float64)
+
+    # 2. Build constraints on the entire data set
+    # Original constraint: y_i (w^T phi_i + b) >= 1
+    # Rewritten for QP form
+    # (Gz <= h): -y_i (phi_i^T w + b) <= -1
+    G = np.zeros((M, n + 1), dtype=np.float64)
+    h = -np.ones(M, dtype=np.float64)
+    for i in range(M):
         yi = float(y[i])
-        G[i, :d] = -yi * Phi[i]
-        G[i, d] = -yi
+        # Assign to the i-th row and columns from 0 to n-1 of matrix G
+        G[i, :n] = -yi * Phi[i]  # coefficients for w
+        G[i, n] = -yi  # coefficient for bias b
 
+    # 3. Convert numpy arrays -> cvxopt format
     def to_cvx(a):
         a = np.asarray(a, dtype=np.float64)
         if a.ndim == 1:
@@ -89,27 +101,26 @@ def fit_primal_hard_margin(Phi, y, solver_opts=None):
     H_cvx, f_cvx = to_cvx(H), to_cvx(f)
     G_cvx, h_cvx = to_cvx(G), to_cvx(h)
 
-    solvers.options["show_progress"] = True
-    if solver_opts:
-        solvers.options.update(solver_opts)
-
+    # 4. Solve the quadratic program
+    solvers.options["show_progress"] = True  # print solver iterations
     sol = solvers.qp(H_cvx, f_cvx, G_cvx, h_cvx)
+
     status = sol["status"]
     if status not in ("optimal", "optimal_inaccurate"):
-        raise RuntimeError(
-            f"Hard-margin QP failed (status: {status}). "
-            "Data may not be separable with this feature map; "
-            "switch to soft-margin if needed."
-        )
+        raise RuntimeError(f"QP solver failed (status: {status}). ")
 
+    # -------------------------------
+    # 5. Extract solution
+    # -------------------------------
     z = np.array(sol["x"]).reshape(-1)
-    w = z[:d]
-    b = float(z[d])
+    w = z[:n]  # learned weights
+    b = float(z[n])  # learned bias
     return w, b
 
 
 # -----------------------------
 # Public train API required by the assignment
+# Run this on the data before running eval
 # -----------------------------
 def train(X, y):
     """
@@ -125,15 +136,14 @@ def train(X, y):
     # No standardization: use raw inputs
     Phi = phi_quad(X.astype(float, copy=True))
 
-    w, b = fit_primal_hard_margin(
-        Phi, y, solver_opts=dict(abstol=1e-9, reltol=1e-8, feastol=1e-9)
-    )
+    w, b = fit_primal(Phi, y)
 
     model = {"w": w, "b": b}
 
 
 # -----------------------------
 # Public eval API required by the assignment
+# For TA: You need to run train on the data then use eval for your test data
 # -----------------------------
 def eval(X):
     """
@@ -148,10 +158,8 @@ def eval(X):
     return np.where(scores >= 0, 1, -1)
 
 
-# -----------------------------
-# Train/Test 80/20 split
-# -----------------------------
-def _train_test_split_stratified(X, y, test_size=0.2, seed=42):
+# Train/Test 80/20 split helper
+def _train_test_split(X, y, test_size=0.2, seed=42):
     rng = np.random.default_rng(seed)
     classes = np.unique(y)
     train_idx, test_idx = [], []
@@ -168,13 +176,13 @@ def _train_test_split_stratified(X, y, test_size=0.2, seed=42):
     return train_idx, test_idx
 
 
+# Demo Run
 if __name__ == "__main__":
-    # Demo run
     data = np.loadtxt("mystery.data", delimiter=",")
     X_all = data[:, :4].astype(float)
     y_all = np.where(data[:, 4].astype(int) >= 0, 1, -1)
 
-    train_indices, test_indices = _train_test_split_stratified(
+    train_indices, test_indices = _train_test_split(
         X_all, y_all, test_size=0.20, seed=42
     )
     X_train, y_train = X_all[train_indices], y_all[train_indices]
@@ -195,5 +203,5 @@ if __name__ == "__main__":
     print(f"Margin (1/||w||): {margin_val:.6f}")
     print(f"Bias b: {model['b']:.6f}")
     print("Weights w:", model["w"])
-    print(f"Train accuracy: {acc_train*100:.2f}%")
-    print(f"Test accuracy: {acc_test*100:.2f}%")
+    print(f"Train accuracy: {acc_train * 100:.2f}%")
+    print(f"Test accuracy: {acc_test * 100:.2f}%")
