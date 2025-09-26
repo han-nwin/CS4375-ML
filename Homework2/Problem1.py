@@ -7,27 +7,8 @@ from cvxopt import matrix, solvers
 # -----------------------------
 model = {}  # {"w": ..., "b": ...}
 
-# -----------------------------
+
 # Quadratic feature map phi(x)
-# -----------------------------
-FEATURE_ORDER = [
-    "x1",
-    "x2",
-    "x3",
-    "x4",
-    "x1^2",
-    "x2^2",
-    "x3^2",
-    "x4^2",
-    "x1*x2",
-    "x1*x3",
-    "x1*x4",
-    "x2*x3",
-    "x2*x4",
-    "x3*x4",
-]
-
-
 def phi_quad(X):
     """
     X: (n,4) raw inputs
@@ -87,9 +68,13 @@ def fit_primal(Phi, y):
     h = -np.ones(M, dtype=np.float64)
     for i in range(M):
         yi = float(y[i])
+
         # Assign to the i-th row and columns from 0 to n-1 of matrix G
-        G[i, :n] = -yi * Phi[i]  # coefficients for w
-        G[i, n] = -yi  # coefficient for bias b
+        # coefficients for w
+        G[i, :n] = -yi * Phi[i]
+
+        # coefficient for bias b
+        G[i, n] = -yi
 
     # 3. Convert numpy arrays -> cvxopt format
     def to_cvx(a):
@@ -119,7 +104,7 @@ def fit_primal(Phi, y):
 
 
 # -----------------------------
-# Public train API required by the assignment
+# Public train API to use before calling eval
 # Run this on the data before running eval
 # -----------------------------
 def train(X, y):
@@ -143,7 +128,7 @@ def train(X, y):
 
 # -----------------------------
 # Public eval API required by the assignment
-# For TA: You need to run train on the data then use eval for your test data
+# For TA: You need to run train on the data set then use eval for your test data
 # -----------------------------
 def eval(X):
     """
