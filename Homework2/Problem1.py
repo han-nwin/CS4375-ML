@@ -39,7 +39,7 @@ def phi_quad(X):
 # -----------------------------
 # Primal SVM (Quadratic Programming)
 # -----------------------------
-def fit_primal(Phi, y):
+def _fit_primal(Phi, y):
     """
     Hard-Margin SVM (Primal Form):
       min_{w,b}  0.5 * ||w||^2
@@ -104,10 +104,9 @@ def fit_primal(Phi, y):
 
 
 # -----------------------------
-# Public train API to use before calling eval
-# Run this on the data before running eval
+# train model on given data set
 # -----------------------------
-def train(X, y):
+def _train(X, y):
     """
     Learn hard-margin SVM in quadratic feature space
     and store learned params in the module-level `model` dict.
@@ -121,25 +120,56 @@ def train(X, y):
     # No standardization: use raw inputs
     Phi = phi_quad(X.astype(float, copy=True))
 
-    w, b = fit_primal(Phi, y)
+    w, b = _fit_primal(Phi, y)
 
     model = {"w": w, "b": b}
 
 
 # -----------------------------
-# Public eval API required by the assignment
-# For TA: You need to run train on the data set then use eval for your test data
+# Private eval to get w and b
 # -----------------------------
-def eval(X):
+def _eval_demo(X):
     """
     Input: X (m x 4) matrix.
-    Output: +-1 predictions using the already learned weights/bias.
+    Output: +-1 predictions using the already learned weights/bias from train().
     Assumes train() has been called to populate model.
     """
     if not model:
         raise RuntimeError("Model is empty. Call train(X, y) first.")
     Phi = phi_quad(X.astype(float, copy=True))
     scores = Phi @ model["w"] + model["b"]
+    return np.where(scores >= 0, 1, -1)
+
+
+# -----------------------------
+# Public eval API for the assignment
+# -----------------------------
+def eval(X):
+    """
+    Input: X (m x 4) matrix.
+    Output: +-1 predictions using the already learned weights/bias.
+    """
+    final_model = {
+        "w": [
+            29.19814671,
+            0.32730614,
+            20.46508506,
+            52.31347643,
+            65.44290667,
+            -93.4816874,
+            -14.98304077,
+            4.55277202,
+            -43.1404392,
+            13.26671215,
+            -2.1563674,
+            -39.70198944,
+            -46.05307219,
+            7.0634797,
+        ],
+        "b": 1.490485,
+    }
+    Phi = phi_quad(X.astype(float, copy=True))
+    scores = Phi @ final_model["w"] + final_model["b"]
     return np.where(scores >= 0, 1, -1)
 
 
@@ -174,9 +204,9 @@ if __name__ == "__main__":
     X_test, y_test = X_all[test_indices], y_all[test_indices]
 
     # train and evaluate
-    train(X_train, y_train)
-    y_train_pred = eval(X_train)
-    y_test_pred = eval(X_test)
+    _train(X_train, y_train)
+    y_train_pred = _eval_demo(X_train)
+    y_test_pred = _eval_demo(X_test)
 
     acc_train = (y_train_pred == y_train).mean()
     acc_test = (y_test_pred == y_test).mean()
@@ -190,3 +220,8 @@ if __name__ == "__main__":
     print("Weights w:", model["w"])
     print(f"Train accuracy: {acc_train * 100:.2f}%")
     print(f"Test accuracy: {acc_test * 100:.2f}%")
+
+    print("------ Test public eval API -----")
+    print(
+        f"Test public eval API: {eval(np.array([[0.905791937075619, 0.892267188231107, 0.955372102971021, 0.739832227063707], [0.126986816293506, 0.24260338627967, 0.724247033520084, 0.88899234515285]]))}"
+    )
