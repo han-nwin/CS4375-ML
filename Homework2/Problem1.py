@@ -104,7 +104,7 @@ def _fit_primal(Phi, y):
 
 
 # -----------------------------
-# train model on given data set
+# Train model on given data set
 # -----------------------------
 def _train(X, y):
     """
@@ -131,7 +131,7 @@ def _train(X, y):
 def _eval_demo(X):
     """
     Input: X (m x 4) matrix.
-    Output: +-1 predictions using the already learned weights/bias from train().
+    Output: +-1 predictions using learned weights/bias from train().
     Assumes train() has been called to populate model.
     """
     if not model:
@@ -142,6 +142,7 @@ def _eval_demo(X):
 
 
 # -----------------------------
+# For TA: REQUIRED EXPORT
 # Public eval API for the assignment
 # -----------------------------
 def eval(X):
