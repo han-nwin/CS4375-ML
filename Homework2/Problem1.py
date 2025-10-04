@@ -94,9 +94,7 @@ def _fit_primal(Phi, y):
     if status not in ("optimal", "optimal_inaccurate"):
         raise RuntimeError(f"QP solver failed (status: {status}). ")
 
-    # -------------------------------
     # 5. Extract solution
-    # -------------------------------
     z = np.array(sol["x"]).reshape(-1)
     w = z[:n]  # learned weights
     b = float(z[n])  # learned bias
@@ -239,7 +237,7 @@ if __name__ == "__main__":
     for i, idx in enumerate(sv_idx):
         print(f"Index {idx}: x={sv_X[i]}, y={sv_y[i]}, margin = {sv_margins[i]}")
 
-    # Print w,b in a copy-paste-able form for eval()
+    # Print w,b in for eval()
     print("\nWeight and bias for eval():")
     print("w =", np.array2string(model["w"], separator=", "))
     print("b =", f"{model['b']:.8f}")
