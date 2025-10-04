@@ -76,25 +76,21 @@ def _fit_primal(Phi, y):
         # coefficient for bias b
         G[i, n] = -yi
 
-    # 3. Convert numpy arrays -> cvxopt format
-    def to_cvx(a):
-        a = np.asarray(a, dtype=np.float64)
-        if a.ndim == 1:
-            a = a.reshape(-1, 1)
-        return matrix(a)
+    # Convert to cvxopt format
+    H = matrix(H)
+    f = matrix(f)
+    G = matrix(G)
+    h = matrix(h)
 
-    H_cvx, f_cvx = to_cvx(H), to_cvx(f)
-    G_cvx, h_cvx = to_cvx(G), to_cvx(h)
-
-    # 4. Solve the quadratic program
+    # 3. Solve the quadratic program
     solvers.options["show_progress"] = True  # print solver iterations
-    sol = solvers.qp(H_cvx, f_cvx, G_cvx, h_cvx)
+    sol = solvers.qp(H, f, G, h)
 
     status = sol["status"]
     if status not in ("optimal", "optimal_inaccurate"):
         raise RuntimeError(f"QP solver failed (status: {status}). ")
 
-    # 5. Extract solution
+    # 4. Extract solution
     z = np.array(sol["x"]).reshape(-1)
     w = z[:n]  # learned weights
     b = float(z[n])  # learned bias
