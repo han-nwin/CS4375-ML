@@ -152,77 +152,94 @@ def eval(X):
     """
     final_model = {
         "w": [
-            29.19814671,
-            0.32730614,
-            20.46508506,
-            52.31347643,
-            65.44290667,
-            -93.4816874,
-            -14.98304077,
-            4.55277202,
-            -43.1404392,
-            13.26671215,
-            -2.1563674,
-            -39.70198944,
-            -46.05307219,
-            7.0634797,
+            31.64224203,
+            -5.42858361,
+            19.62638296,
+            60.78431324,
+            60.79719603,
+            -101.40837995,
+            -15.22046704,
+            10.96144778,
+            -29.88672501,
+            10.58137356,
+            -1.79809404,
+            -34.84917827,
+            -61.61341963,
+            3.50684772,
         ],
-        "b": 1.490485,
+        "b": 2.89888111,
     }
+
     Phi = phi_quad(X.astype(float, copy=True))
     scores = Phi @ final_model["w"] + final_model["b"]
     return np.where(scores >= 0, 1, -1)
 
 
-# Train/Test 80/20 split helper
-def _train_test_split(X, y, test_size=0.2, seed=42):
-    rng = np.random.default_rng(seed)
-    classes = np.unique(y)
-    train_idx, test_idx = [], []
-    for c in classes:
-        idx = np.where(y == c)[0]
-        rng.shuffle(idx)
-        n_test = max(1, int(round(test_size * len(idx))))
-        test_idx.append(idx[:n_test])
-        train_idx.append(idx[n_test:])
-    train_idx = np.concatenate(train_idx)
-    test_idx = np.concatenate(test_idx)
-    rng.shuffle(train_idx)
-    rng.shuffle(test_idx)
-    return train_idx, test_idx
+def check_hard_margin_feasibility(Phi, y, w, b, tol=1e-6):
+    """
+    For hard-margin SVM:
+      constraints: y_i (w^T phi_i + b) >= 1
+    Returns a dict with min margin and number of violations (< 1 - tol).
+    """
+    margins = y * (Phi @ w + b)
+    min_margin = float(margins.min()) if len(margins) else float("inf")
+    num_viol = int((margins < 1 - tol).sum())
+    return {
+        "min_margin": min_margin,
+        "num_violations": num_viol,
+        "violating_indices": np.where(margins < 1 - tol)[0],
+    }
+
+
+def print_feasibility_report(name, report):
+    print(f"--- {name} feasibility (hard-margin) ---")
+    print(f"Min y*(w^T phi + b): {report['min_margin']:.6f}")
+    print(f"Violations (< 1):   {report['num_violations']}")
+
+
+def support_vectors(X, y, Phi, w, b, atol=1e-6):
+    """
+    Return indices, margins, and the original feature vectors (with labels)
+    for support vectors.
+    """
+    margins = y * (Phi @ w + b)
+    sv_idx = np.where(np.isclose(margins, 1.0, atol=atol))[0]
+    return sv_idx, margins[sv_idx], X[sv_idx], y[sv_idx]
 
 
 # Demo Run
 if __name__ == "__main__":
+    # Load full dataset
     data = np.loadtxt("mystery.data", delimiter=",")
-    X_all = data[:, :4].astype(float)
-    y_all = np.where(data[:, 4].astype(int) >= 0, 1, -1)
+    X = data[:, :4].astype(float)
+    y = np.where(data[:, 4].astype(int) >= 0, 1, -1)
 
-    train_indices, test_indices = _train_test_split(
-        X_all, y_all, test_size=0.20, seed=42
+    # Train on alL data
+    _train(X, y)
+
+    # Diagnostics on ALL data
+    Phi = phi_quad(X.astype(float, copy=True))
+
+    # Feasibility (should be 0 violations if perfectly separable)
+    report = check_hard_margin_feasibility(Phi, y, model["w"], model["b"], tol=1e-6)
+    print_feasibility_report("ALL DATA", report)
+
+    # Margin and weights
+    nw = np.linalg.norm(model["w"])
+    print("------ FINAL MODEL-----")
+    print(f"Bias b: {model['b']}")
+    print(f"||w||: {nw}")
+    print(f"Optimal margin 1/||w||: {1.0/max(nw,1e-12)}")
+
+    # Support vectors (indices, values, and labels)
+    sv_idx, sv_margins, sv_X, sv_y = support_vectors(
+        X, y, Phi, model["w"], model["b"], atol=1e-6
     )
-    X_train, y_train = X_all[train_indices], y_all[train_indices]
-    X_test, y_test = X_all[test_indices], y_all[test_indices]
+    print(f"# support vectors: {len(sv_idx)}")
+    for i, idx in enumerate(sv_idx):
+        print(f"Index {idx}: x={sv_X[i]}, y={sv_y[i]}, margin = {sv_margins[i]}")
 
-    # train and evaluate
-    _train(X_train, y_train)
-    y_train_pred = _eval_demo(X_train)
-    y_test_pred = _eval_demo(X_test)
-
-    acc_train = (y_train_pred == y_train).mean()
-    acc_test = (y_test_pred == y_test).mean()
-    # margin (1/||w||)
-    margin_val = 1.0 / max(np.linalg.norm(model["w"]), 1e-12)
-
-    print("------ DEMO RESULTS (80/20) -----")
-    print(f"Train size: {len(train_indices)}, Test size: {len(test_indices)}")
-    print(f"Margin (1/||w||): {margin_val:.6f}")
-    print(f"Bias b: {model['b']:.6f}")
-    print("Weights w:", model["w"])
-    print(f"Train accuracy: {acc_train * 100:.2f}%")
-    print(f"Test accuracy: {acc_test * 100:.2f}%")
-
-    print("------ Test public eval API -----")
-    print(
-        f"Test public eval API: {eval(np.array([[0.905791937075619, 0.892267188231107, 0.955372102971021, 0.739832227063707], [0.126986816293506, 0.24260338627967, 0.724247033520084, 0.88899234515285]]))}"
-    )
+    # Print w,b in a copy-paste-able form for eval()
+    print("\nWeight and bias for eval():")
+    print("w =", np.array2string(model["w"], separator=", "))
+    print("b =", f"{model['b']:.8f}")
