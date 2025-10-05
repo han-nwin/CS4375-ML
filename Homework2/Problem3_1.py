@@ -7,16 +7,6 @@ solvers.options["show_progress"] = False
 def polynomial_features(X, degree=2):
     """
     Create polynomial features up to given degree.
-
-    For degree=2 with features [x1, x2]:
-    Returns [x1, x2, x1^2, x1*x2, x2^2]
-
-    Args:
-        X: M x n matrix
-        degree: polynomial degree (default 2 for quadratic)
-
-    Returns:
-        X_poly: M x n_new matrix with polynomial features
     """
     M, n = X.shape
 
@@ -78,20 +68,6 @@ def polynomial_features(X, degree=2):
 def train_primal_svm(X, y, C=1.0):
     """
     Train Primal SVM with slack variables using QP.
-
-    Formulation:
-    min (1/2)||w||^2 + C * sum(xi_i)
-    s.t. y_i(w^T x_i + b) >= 1 - xi_i
-         xi_i >= 0
-
-    Args:
-        X: Training data (M samples, n features) - M x n matrix
-        y: Labels in {0, 1} (M samples)
-        C: Regularization parameter
-
-    Returns:
-        w: Weight vector (n x 1)
-        b: Bias term (scalar)
     """
     M, n = X.shape
 
