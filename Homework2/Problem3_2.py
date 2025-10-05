@@ -1,22 +1,10 @@
 import numpy as np
 from cvxopt import matrix, solvers
 
-solvers.options["show_progress"] = False
-
 
 def gaussian_kernel(X1, X2, sigma):
     """
     Compute Gaussian (RBF) kernel matrix.
-
-    K(x, x') = exp(-||x - x'||^2 / (2 * sigma^2))
-
-    Args:
-        X1: M1 x n matrix
-        X2: M2 x n matrix
-        sigma: Kernel width parameter
-
-    Returns:
-        K: M1 x M2 kernel matrix
     """
     # Compute squared Euclidean distances
     # ||x - x'||^2 = ||x||^2 + ||x'||^2 - 2<x, x'>
@@ -33,22 +21,6 @@ def gaussian_kernel(X1, X2, sigma):
 def train_dual_svm(X, y, C=1.0, sigma=1.0):
     """
     Train Dual SVM with Gaussian kernel using QP.
-
-    Dual formulation:
-    max sum(lambda_i) - (1/2) sum_i sum_j lambda_i lambda_j y_i y_j K(x_i, x_j)
-    s.t. 0 <= lambda_i <= C
-         sum(lambda_i y_i) = 0
-
-    Args:
-        X: Training data (M samples, n features) - M x n matrix
-        y: Labels in {0, 1} (M samples)
-        C: Regularization parameter
-        sigma: Gaussian kernel width
-
-    Returns:
-        lambda_: Dual variables (M x 1)
-        b: Bias term (scalar)
-        support_vectors: Indices of support vectors
     """
     M = X.shape[0]
 
@@ -83,6 +55,8 @@ def train_dual_svm(X, y, C=1.0, sigma=1.0):
     A_cvx = matrix(A)
     b_cvx = matrix(b_eq)
 
+    # Solver
+    solvers.options["show_progress"] = False
     sol = solvers.qp(H_cvx, f_cvx, G_cvx, h_cvx, A_cvx, b_cvx)
 
     # Extract solution
