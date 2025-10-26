@@ -1,35 +1,24 @@
-# Byte-compiled / optimized / DLL files
+# Windows Zone.Identifier files (created when downloading files on WSL/Windows)
+*:Zone.Identifier
+
+# Python
 __pycache__/
 *.py[cod]
+*$py.class
+*.so
+.Python
 
-# Virtual environment
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Virtual environments
 venv/
+env/
+ENV/
 
-# Distribution / packaging
-build/
-dist/
-*.egg-info/
-
-# Test / coverage
-.coverage
-htmlcov/
-.pytest_cache/
-nosetests.xml
-coverage.xml
-
-# Environment variables
-.env
-.env.*
-
-# Logs
-*.log
-pip-log.txt
-pip-delete-this-directory.txt
-
-# IDEs
+# IDE
 .vscode/
 .idea/
-
-# OS-generated files
-.DS_Store
-Thumbs.db
+*.swp
+*.swo
+*~
