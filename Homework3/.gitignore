@@ -1,0 +1,24 @@
+# Windows Zone.Identifier files (created when downloading files on WSL/Windows)
+*:Zone.Identifier
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Virtual environments
+venv/
+env/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
