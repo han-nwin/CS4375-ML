@@ -1,6 +1,3 @@
-# Usage:
-#   python svm_cv.py wdbc_train.data wdbc_test.data
-
 import sys
 import math
 import random
@@ -103,6 +100,7 @@ class PegasosSVM:
 
 
 def contiguous_kfold_indices(n: int, k: int) -> List[Tuple[int, int]]:
+    # Generate start and end indices for k contiguous folds for cross-validation
     base = n // k
     rem = n % k
     blocks = []
@@ -123,11 +121,11 @@ def main():
     y_tr, X_tr = read_xy("wdbc_train.data")
     y_te, X_te = read_xy("wdbc_test.data")
 
-    n = len(X_tr)
+    M = len(X_tr)
     k = 10
-    folds = contiguous_kfold_indices(n, k)
+    folds = contiguous_kfold_indices(M, k)
 
-    # Reasonable C grid for linear SVM (tune as needed)
+    # Reasonable C grid for linear SVM
     C_grid = [1e-3, 3e-3, 1e-2, 3e-2, 1e-1, 3e-1, 1, 3, 10, 30, 100, 300, 1000]
 
     epochs_cv = 7
