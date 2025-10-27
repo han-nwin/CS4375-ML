@@ -107,7 +107,7 @@ def information_gain(
 
 
 # -----------------------------
-# Decision Tree (ID3)
+# Decision Tree
 # -----------------------------
 class Node:
     def __init__(
@@ -169,7 +169,7 @@ def all_same_class(rows: list[list[str]], class_index: int = 0) -> bool:
     return all(row[class_index] == first for row in rows)
 
 
-def id3_train(
+def train(
     rows: list[list[str]],
     header: list[str],
     class_index: int = 0,
@@ -235,7 +235,7 @@ def id3_train(
                 ig_at_node=0.0,
             )
         else:
-            child = id3_train(subset, header, class_index, new_candidates, report)
+            child = train(subset, header, class_index, new_candidates, report)
         node.children[val] = child
 
     return node
@@ -277,12 +277,9 @@ def accuracy(
 # Main routine
 # -----------------------------
 def main():
-    if len(sys.argv) != 3:
-        print("Usage: python Problem1.py mush_train.data mush_test.data")
-        sys.exit(1)
 
-    train_path = sys.argv[1]
-    test_path = sys.argv[2]
+    train_path = "mush_train.data"
+    test_path = "mush_test.data"
 
     header_train, train_rows = read_dataset(train_path)
     header_test, test_rows = read_dataset(test_path)
@@ -293,12 +290,12 @@ def main():
 
     # Build tree
     report: list[tuple[int, float]] = []
-    tree = id3_train(
+    tree = train(
         train_rows, header_train, class_index=0, candidate_attrs=None, report=report
     )
 
     # Print tree with IG
-    print("\n=== Decision Tree (ID3) ===")
+    print("\n=== Decision Tree ===")
     for line in tree.pretty(header_train):
         print(line)
 
