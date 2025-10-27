@@ -77,8 +77,11 @@ def conditional_entropy(subsets: list[list[str]], totals: list[int]) -> float:
     total = sum(totals)
     if total == 0:
         return 0.0
+    # conditional entropy
     ce = 0.0
-    for labels_v, size_v in zip(subsets, totals):
+    for i in range(len(subsets)):
+        labels_v = subsets[i]
+        size_v = totals[i]
         if size_v == 0:
             continue
         ce += (size_v / total) * entropy(labels_v)
@@ -177,7 +180,7 @@ def train(
     report: list[tuple[int, float]] | None = None,
 ) -> Node:
     """
-    Trains an ID3 tree.
+    Trains a decision tree.
     - rows: dataset
     - header: column names (index 0 is 'class')
     - class_index: index of class label (0)
@@ -266,6 +269,7 @@ def accuracy(
 ) -> float:
     if not rows:
         return 0.0
+    # counter for correct predictions
     correct = 0
     for r in rows:
         if predict_one(node, r, default_class, class_index) == r[class_index]:
