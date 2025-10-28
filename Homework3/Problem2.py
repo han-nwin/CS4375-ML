@@ -128,10 +128,12 @@ def main():
     # C values to tune
     C_grid = [1e-3, 3e-3, 1e-2, 3e-2, 1e-1, 3e-1, 1, 3, 10, 30, 100, 300, 1000]
 
-    # Train each bucket of data with different C values
-    epochs_cv = 7
+    # Number of epochs to train with CV
+    epochs_cv = 30
+    # Number of epochs to train with final model
     epochs_final = 25
 
+    # Train each bucket of data with different C values
     results: list[tuple[float, float]] = []
     for C in C_grid:
         accs = []
@@ -164,7 +166,7 @@ def main():
     final.fit(Ztr_full, y_tr)
     test_acc = accuracy(y_te, final.predict(Zte))
 
-    print("=== 10-Fold Cross-Validation ===")
+    print(f"=== {k}-Fold Cross-Validation ===")
     for C, avg in results:
         print(f"C = {C:<6} CV-avg-acc={avg*100:6.2f}%")
     print("\n=== Selected hyperparameters ===")
