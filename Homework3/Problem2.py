@@ -125,9 +125,10 @@ def main():
     k = 10
     folds = contiguous_kfold_indices(M, k)
 
-    # Reasonable C grid for linear SVM
+    # C values to tune
     C_grid = [1e-3, 3e-3, 1e-2, 3e-2, 1e-1, 3e-1, 1, 3, 10, 30, 100, 300, 1000]
 
+    # Train each bucket of data with different C values
     epochs_cv = 7
     epochs_final = 25
 
@@ -158,11 +159,12 @@ def main():
     Ztr_full = standardize(X_tr, mu_full, sigma_full)
     Zte = standardize(X_te, mu_full, sigma_full)
 
+    # Retrain final model with best C
     final = PegasosSVM(C=best_C, epochs=epochs_final, seed=777)
     final.fit(Ztr_full, y_tr)
     test_acc = accuracy(y_te, final.predict(Zte))
 
-    print("=== 10-Fold Cross-Validation (contiguous) ===")
+    print("=== 10-Fold Cross-Validation ===")
     for C, avg in results:
         print(f"C = {C:<6} CV-avg-acc={avg*100:6.2f}%")
     print("\n=== Selected hyperparameters ===")
