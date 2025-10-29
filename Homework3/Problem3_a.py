@@ -129,6 +129,10 @@ def adaboost_10_rounds(
         test_acc_curve: (10,) (zeros if no test set given)
     """
     all_stumps = generate_all_stumps(Xtr)
+    print(
+        f"Evaluating {len(all_stumps)} candidate stumps each round (22 features x 2 polarities)."
+    )
+
     M = Xtr.shape[0]
     # Start weights at 1/M
     w = np.ones(M) / M
