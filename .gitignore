@@ -1,5 +1,6 @@
 # Windows Zone.Identifier files (created when downloading files on WSL/Windows)
 *:Zone.Identifier
+.DS_Store
 
 # Python
 __pycache__/
