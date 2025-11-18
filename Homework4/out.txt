@@ -1,0 +1,14 @@
+================================================================================
+PROBLEM 1_a: SVMs and PCA
+================================================================================
+
+Loading data...
+Training set: 6000 samples, 5000 features
+
+--------------------------------------------------------------------------------
+Performing PCA...
+Data shape: (6000, 5000)
+M (number of data points): 6000
+n (number of features): 5000
+Covariance matrix shape: (5000, 5000)
+Computing eigenvalues and eigenvectors...
