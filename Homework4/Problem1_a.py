@@ -237,8 +237,8 @@ def main():
     results = {}
 
     # Hyperparameters to tune
-    C_values = [0.1, 1, 10, 100]
-    sigma_values = [0.1, 1, 10, 100]
+    C_values = [0.1, 1, 10]
+    sigma_values = [0.1, 1, 10]
 
     for k_name, k in K_clean.items():
         print(f"\n{'-'*80}")
