@@ -237,8 +237,9 @@ def main():
     results = {}
 
     # Hyperparameters to tune
+    # Using larger sigma values based on eigenvalue scale (millions)
     C_values = [0.1, 1, 10]
-    sigma_values = [0.1, 1, 10]
+    sigma_values = [3000, 10000, 30000]
 
     for k_name, k in K_clean.items():
         print(f"\n{'-'*80}")
@@ -315,16 +316,85 @@ def main():
             f"{name:<10} {res['k']:<8} {res['C']:<8.1f} {res['sigma']:<10.2f} {res['valid_acc']*100:<12.2f} {res['test_acc']*100:<12.2f} {res['test_error']*100:<12.2f}"
         )
 
-    # Find best model
+    # Find best PCA model
     best_model_name = min(results.items(), key=lambda x: x[1]["test_error"])[0]
     best_model = results[best_model_name]
     print(f"\n{'-'*80}")
-    print(f"BEST MODEL: {best_model_name}")
+    print(f"BEST PCA MODEL: {best_model_name}")
     print(f"  k = {best_model['k']}")
     print(f"  C = {best_model['C']}")
     print(f"  sigma = {best_model['sigma']}")
     print(f"  Test Error = {best_model['test_error']*100:.2f}%")
     print(f"{'-'*80}")
+
+    # Train baseline model (no PCA - all original features)
+    print("\n" + "=" * 80)
+    print("BASELINE: SVM WITHOUT PCA (All Original Features)")
+    print("=" * 80)
+
+    print(f"\nTraining SVM with ALL {X_train.shape[1]} original features (no PCA)")
+
+    # Grid search for best hyperparameters using validation set
+    best_accuracy = 0
+    best_C = None
+    best_sigma = None
+
+    print("Tuning hyperparameters on validation set...")
+    for C in C_values:
+        for sigma in sigma_values:
+            print(f"  Trying C={C}, sigma={sigma}...", end=" ")
+            # Train SVM
+            svm = SVM_Gaussian(C=C, sigma=sigma)
+            svm.fit(X_train, y_train)
+
+            # Evaluate on validation set
+            y_valid_pred = svm.predict(X_valid)
+            accuracy = np.mean(y_valid_pred == y_valid)
+            print(f"Val Acc: {accuracy*100:.2f}%")
+
+            if accuracy > best_accuracy:
+                best_accuracy = accuracy
+                best_C = C
+                best_sigma = sigma
+
+    print(f"\nBest hyperparameters: C={best_C}, sigma={best_sigma}")
+    print(f"Validation accuracy: {best_accuracy*100:.2f}%")
+
+    # Train final baseline model with best hyperparameters
+    print("Training final model with best hyperparameters...")
+    svm_baseline = SVM_Gaussian(C=best_C, sigma=best_sigma)
+    svm_baseline.fit(X_train, y_train)
+
+    # Evaluate on test set
+    y_test_pred = svm_baseline.predict(X_test)
+    test_accuracy = np.mean(y_test_pred == y_test)
+    test_error = 1 - test_accuracy
+
+    print("\n" + "=" * 80)
+    print("BASELINE RESULTS")
+    print("=" * 80)
+    print(f"Features used: ALL {X_train.shape[1]} original features (no PCA)")
+    print(f"Best C: {best_C}")
+    print(f"Best sigma: {best_sigma}")
+    print(f"Validation accuracy: {best_accuracy*100:.2f}%")
+    print(f"Test accuracy: {test_accuracy*100:.2f}%")
+    print(f"Test error: {test_error*100:.2f}%")
+    print("=" * 80)
+
+    # Final comparison
+    print("\n" + "=" * 80)
+    print("FINAL COMPARISON")
+    print("=" * 80)
+    print(f"\nBest PCA Model ({best_model_name} with {best_model['k']} components):")
+    print(f"  Test Error: {best_model['test_error']*100:.2f}%")
+    print(f"\nBaseline Model (all {X_train.shape[1]} features):")
+    print(f"  Test Error: {test_error*100:.2f}%")
+    print(f"\nDifference: {(test_error - best_model['test_error'])*100:.2f}%")
+    if best_model['test_error'] < test_error:
+        print(f"PCA model is BETTER by {(test_error - best_model['test_error'])*100:.2f}%")
+    else:
+        print(f"Baseline is BETTER by {(best_model['test_error'] - test_error)*100:.2f}%")
+    print("=" * 80)
 
 
 if __name__ == "__main__":
