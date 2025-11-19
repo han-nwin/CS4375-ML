@@ -1,5 +1,62 @@
 import numpy as np
-from sklearn.svm import LinearSVC
+from cvxopt import matrix, solvers
+
+
+class SVM_Linear_Primal:
+    """
+    Primal soft-margin linear SVM
+    """
+
+    def __init__(self, C=1.0):
+        self.C = C
+        self.w = None
+        self.X_train = None
+        self.y_train = None
+
+    def fit(self, X, y):
+        """
+        Solve primal SVM QP
+        """
+        m, d = X.shape
+
+        y = np.where(y <= 0, -1, y).astype(float)
+        self.y_train = y
+        self.X_train = X
+
+        n_vars = d + m
+
+        H = np.zeros((n_vars, n_vars))
+        H[:d, :d] = np.eye(d)
+
+        f = np.zeros(n_vars)
+        f[d:] = self.C
+
+        G1 = np.zeros((m, n_vars))
+        G1[:, :d] = -(y[:, None] * X)
+        G1[:, d:] = -np.eye(m)
+        h1 = -np.ones(m)
+
+        G2 = np.zeros((m, n_vars))
+        G2[:, d:] = -np.eye(m)
+        h2 = np.zeros(m)
+
+        G = np.vstack([G1, G2])
+        h = np.hstack([h1, h2])
+
+        H_cvx = matrix(H)
+        f_cvx = matrix(f)
+        G_cvx = matrix(G)
+        h_cvx = matrix(h)
+
+        solvers.options["show_progress"] = False
+        sol = solvers.qp(H_cvx, f_cvx, G_cvx, h_cvx)
+
+        z = np.array(sol["x"]).flatten()
+        self.w = z[:d]
+
+    def predict(self, X):
+        decision = X @ self.w
+        return np.where(decision >= 0, 1, -1)
 
 
 def load_data():
@@ -51,9 +108,7 @@ def compute_pi_distribution(eigenvectors, k):
     pi_j = (1/k) * sum_{i=1..k} v(i)_j^2
     """
     top_k_eigenvectors = eigenvectors[:, :k]
-    # pi_j measures how much feature j contributes to top k principal components
     pi = np.mean(top_k_eigenvectors**2, axis=1)
-    # Normalize to make it a valid probability distribution
     pi = pi / np.sum(pi)
     return pi
 
@@ -63,14 +118,13 @@ def sample_features(pi, s):
     Sample s features from the probability distribution pi
     Remove duplicates
     """
-    # Sample s features with replacement according to pi probabilities
     sampled = np.random.choice(len(pi), size=s, replace=True, p=pi)
-    # Remove duplicates - each feature used only once
     selected_features = np.unique(sampled)
     return selected_features
 
 
 def main():
+    """Main function for Problem 1b: PCA Feature Selection"""
     print("=" * 80)
     print("PROBLEM 1_b: PCA for Feature Selection (Linear SVM)")
     print("=" * 80)
@@ -86,7 +140,6 @@ def main():
     cumulative_variance = np.cumsum(eigenvalues)
     variance_ratios = cumulative_variance / total_variance
 
-    # Build K: number of components needed to explain z% variance
     thresholds = [0.99, 0.95, 0.90, 0.80, 0.75]
     K = {}
     for z in thresholds:
@@ -95,11 +148,9 @@ def main():
 
     print(f"\nSet K = {K}")
 
-    # Test with s = 10, 20, ..., 100 features
     s_values = list(range(10, 101, 10))
     print(f"s values: {s_values}")
 
-    # Run 10 experiments per configuration for statistical reliability
     num_experiments = 10
     C = 1.0
 
@@ -114,7 +165,6 @@ def main():
         print(f"Processing {k_name} = {k_value} components")
         print(f"{'-'*80}")
 
-        # Compute probability distribution over features for this k
         pi = compute_pi_distribution(eigenvectors, k_value)
         print(f"Computed pi distribution (sum = {np.sum(pi):.6f})")
 
@@ -126,14 +176,12 @@ def main():
             test_errors = []
 
             for exp in range(num_experiments):
-                # Sample features according to pi distribution
                 selected_features = sample_features(pi, s)
 
                 X_train_selected = X_train[:, selected_features]
                 X_test_selected = X_test[:, selected_features]
 
-                # Train linear SVM on selected features only
-                svm = LinearSVC(C=C, max_iter=100000, dual="auto")
+                svm = SVM_Linear_Primal(C=C)
                 svm.fit(X_train_selected, y_train)
 
                 y_test_pred = svm.predict(X_test_selected)
@@ -154,42 +202,35 @@ def main():
                 "test_errors": test_errors,
             }
 
-            print(
-                f"    Mean test error: {mean_error*100:.2f}% +/- {std_error*100:.2f}%"
-            )
+            print(f"    Mean test error: {mean_error*100:.2f}% +/- {std_error*100:.2f}%")
 
     print("\n" + "=" * 80)
-    print("RESULTS SUMMARY (Test Error %)")
+    print("RESULTS SUMMARY")
     print("=" * 80)
-
-    # Header
-    print(f"\n{'k value':<12}", end="")
+    print(f"\n{'k \\ s':<10}", end="")
     for s in s_values:
-        print(f"s={s:<10}", end="")
+        print(f"{s:<12}", end="")
     print()
-    print("-" * 130)
+    print("-" * 140)
 
-    # Data rows
     for k_name in K.keys():
-        k_val = K[k_name]
-        print(f"{k_name} (k={k_val:<4})", end="")
+        print(f"{k_name:<10}", end="")
         for s in s_values:
             mean_err = results[k_name][s]["mean_error"] * 100
             std_err = results[k_name][s]["std_error"] * 100
-            print(f"{mean_err:5.2f}±{std_err:4.2f}  ", end="")
+            print(f"{mean_err:.2f}+/-{std_err:.2f}  ", end="")
         print()
-    print("-" * 130)
 
     print("\n" + "=" * 80)
     print("BEST CONFIGURATIONS")
     print("=" * 80)
 
     best_overall = None
-    best_error = float("inf")
+    best_error = float('inf')
 
     for k_name in K.keys():
         best_s_for_k = None
-        best_error_for_k = float("inf")
+        best_error_for_k = float('inf')
 
         for s in s_values:
             mean_err = results[k_name][s]["mean_error"]
@@ -201,23 +242,17 @@ def main():
                 best_error = mean_err
                 best_overall = (k_name, s, mean_err)
 
-        print(
-            f"\nBest for {k_name} (k={K[k_name]}): s={best_s_for_k}, error={best_error_for_k*100:.2f}%"
-        )
+        print(f"\nBest for {k_name} (k={K[k_name]}): s={best_s_for_k}, error={best_error_for_k*100:.2f}%")
 
     print(f"\n{'-'*80}")
-    print(
-        f"BEST OVERALL: {best_overall[0]} (k={K[best_overall[0]]}), s={best_overall[1]}"
-    )
+    print(f"BEST OVERALL: {best_overall[0]} (k={K[best_overall[0]]}), s={best_overall[1]}")
     print(f"Mean test error: {best_overall[2]*100:.2f}%")
     print(f"{'-'*80}")
 
     print("\n" + "=" * 80)
     print("COMPARISON WITH BASELINES")
     print("=" * 80)
-    print(
-        f"\nFeature Selection Best: {best_overall[2]*100:.2f}% (k={K[best_overall[0]]}, s={best_overall[1]})"
-    )
+    print(f"\nFeature Selection Best: {best_overall[2]*100:.2f}% (k={K[best_overall[0]]}, s={best_overall[1]})")
     print(f"PCA Projection Best (from 1a): 1.80% (k=855)")
     print(f"No Feature Selection (from 1a): 2.00% (all 5000 features)")
     print("=" * 80)
