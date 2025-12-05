@@ -1,27 +1,8 @@
-"""
-Problem 1: Logistic Regression
-CS 4375 - Problem Set 5
-
-This module implements logistic regression with different regularization techniques
-and compares them on the Sonar dataset. It also includes SVM implementation for
-linearly separable data.
-"""
-
 import numpy as np
 import matplotlib.pyplot as plt
 
 
 def load_data(filename):
-    """
-    Load data from file.
-
-    Args:
-        filename: Path to data file
-
-    Returns:
-        X: Feature matrix (M, n) where M is number of data points, n is number of features
-        y: Labels (M,) with values in {0, 1}
-    """
     data = np.loadtxt(filename, delimiter=",")
     X = data[:, :-1]
     y = data[:, -1]
@@ -31,19 +12,6 @@ def load_data(filename):
 
 
 def normalize_features(X_train, X_valid, X_test):
-    """
-    Normalize features to have zero mean and unit variance based on training set statistics.
-
-    Args:
-        X_train: Training feature matrix
-        X_valid: Validation feature matrix
-        X_test: Test feature matrix
-
-    Returns:
-        X_train_norm, X_valid_norm, X_test_norm: Normalized feature matrices
-        mean: Feature means from training set
-        std: Feature standard deviations from training set
-    """
     mean = np.mean(X_train, axis=0)
     std = np.std(X_train, axis=0)
     # Avoid division by zero
@@ -57,38 +25,16 @@ def normalize_features(X_train, X_valid, X_test):
 
 
 def sigmoid(z):
-    """
-    Compute sigmoid function.
-
-    Args:
-        z: Input array
-
-    Returns:
-        Sigmoid of z
-    """
     # Clip to prevent overflow
     z = np.clip(z, -500, 500)
     return 1 / (1 + np.exp(-z))
 
 
 def compute_accuracy(y_true, y_pred):
-    """
-    Compute classification accuracy.
-
-    Args:
-        y_true: True labels
-        y_pred: Predicted labels
-
-    Returns:
-        Accuracy as a float
-    """
     return np.mean(y_true == y_pred)
 
 
 class LogisticRegression:
-    """
-    Logistic Regression classifier with optional L1/L2 regularization.
-    """
 
     def __init__(
         self,
@@ -100,18 +46,6 @@ class LogisticRegression:
         enable_weight_clipping=True,
         max_weight_value=100.0,
     ):
-        """
-        Initialize logistic regression model.
-
-        Args:
-            learning_rate: Learning rate for gradient descent
-            n_iterations: Maximum number of iterations
-            regularization: Type of regularization ('l1', 'l2', or None)
-            lambda_reg: Regularization parameter
-            tolerance: Convergence tolerance (set to 0 to disable early stopping)
-            enable_weight_clipping: Whether to clip weights to prevent overflow
-            max_weight_value: Maximum absolute value for weights (if clipping enabled)
-        """
         self.learning_rate = learning_rate
         self.n_iterations = n_iterations
         self.regularization = regularization
@@ -124,14 +58,6 @@ class LogisticRegression:
         self.loss_history = []
 
     def fit(self, X, y, verbose=False):
-        """
-        Fit logistic regression model using gradient descent.
-
-        Args:
-            X: Feature matrix (M, n) where M is number of data points, n is number of features
-            y: Labels (M,)
-            verbose: Whether to print progress
-        """
         M, n = X.shape
 
         # Initialize weights and bias
@@ -220,60 +146,21 @@ class LogisticRegression:
         return self
 
     def predict_proba(self, X):
-        """
-        Predict probabilities.
-
-        Args:
-            X: Feature matrix
-
-        Returns:
-            Predicted probabilities
-        """
         z = np.dot(X, self.weights) + self.bias
         return sigmoid(z)
 
     def predict(self, X):
-        """
-        Predict class labels.
-
-        Args:
-            X: Feature matrix
-
-        Returns:
-            Predicted labels
-        """
         return (self.predict_proba(X) >= 0.5).astype(int)
 
     def count_nonzero_weights(self, threshold=1e-5):
-        """
-        Count number of non-zero weights.
-
-        Args:
-            threshold: Threshold below which weights are considered zero
-
-        Returns:
-            Number of non-zero weights
-        """
         return np.sum(np.abs(self.weights) > threshold)
 
 
 class SVM:
-    """
-    Support Vector Machine using gradient descent on hinge loss.
-    """
 
     def __init__(
         self, learning_rate=0.01, n_iterations=100000, lambda_reg=0.01, tolerance=1e-6
     ):
-        """
-        Initialize SVM model.
-
-        Args:
-            learning_rate: Learning rate for gradient descent
-            n_iterations: Maximum number of iterations
-            lambda_reg: Regularization parameter
-            tolerance: Convergence tolerance
-        """
         self.learning_rate = learning_rate
         self.n_iterations = n_iterations
         self.lambda_reg = lambda_reg
@@ -283,14 +170,6 @@ class SVM:
         self.loss_history = []
 
     def fit(self, X, y, verbose=False):
-        """
-        Fit SVM model using gradient descent.
-
-        Args:
-            X: Feature matrix (M, n) where M is number of data points, n is number of features
-            y: Labels (M,) in {0, 1}
-            verbose: Whether to print progress
-        """
         M, n = X.shape
 
         # Convert labels from {0, 1} to {-1, 1} for SVM
@@ -339,33 +218,11 @@ class SVM:
         return self
 
     def predict(self, X):
-        """
-        Predict class labels.
-
-        Args:
-            X: Feature matrix
-
-        Returns:
-            Predicted labels in {0, 1}
-        """
         decision = np.dot(X, self.weights) + self.bias
         return (decision >= 0).astype(int)
 
 
 def generate_linearly_separable_data(M=100, n=2, separation=2.0, random_state=42):
-    """
-    Generate linearly separable data in R^n.
-
-    Args:
-        M: Number of data points
-        n: Number of features
-        separation: Separation between classes
-        random_state: Random seed
-
-    Returns:
-        X: Feature matrix (M, n)
-        y: Labels (M,)
-    """
     np.random.seed(random_state)
 
     # Generate random points for class 0
@@ -388,16 +245,6 @@ def generate_linearly_separable_data(M=100, n=2, separation=2.0, random_state=42
 
 
 def plot_decision_boundary_2d(X, y, models, model_names, title="Decision Boundaries"):
-    """
-    Plot decision boundaries for 2D data.
-
-    Args:
-        X: Feature matrix (M, 2) where M is number of data points
-        y: Labels (M,)
-        models: List of trained models
-        model_names: List of model names
-        title: Plot title
-    """
     plt.figure(figsize=(12, 4))
 
     # Create mesh
@@ -454,23 +301,6 @@ def tune_hyperparameter(
     regularization_type,
     verbose=False,
 ):
-    """
-    Tune regularization hyperparameter using validation set.
-
-    Args:
-        X_train: Training features
-        y_train: Training labels
-        X_valid: Validation features
-        y_valid: Validation labels
-        lambda_values: List of lambda values to try
-        regularization_type: 'l1' or 'l2'
-        verbose: Whether to print training progress for each model
-
-    Returns:
-        best_lambda: Best lambda value
-        best_model: Best trained model
-        validation_accuracies: List of validation accuracies
-    """
     best_accuracy = 0
     best_lambda = None
     best_model = None
@@ -516,9 +346,6 @@ def tune_hyperparameter(
 
 
 def main():
-    """
-    Main function to run all experiments for Problem 1.
-    """
     print("=" * 70)
     print("Problem 1: Logistic Regression")
     print("=" * 70)
