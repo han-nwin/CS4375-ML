@@ -26,7 +26,7 @@ ROBOT = "R"
 GOOD = "G"  # good apple
 BAD = "B"  # bad apple
 
-ACTIONS = ["UP", "DOWN", "LEFT", "RIGHT", "EAT", "STAY"]
+ACTIONS = ["UP", "DOWN", "LEFT", "RIGHT", "STAY"]
 
 DIRS = {
     "UP": (-1, 0),
@@ -44,8 +44,8 @@ def clamp(v, lo, hi):
 class AppleWorld:
     def __init__(
         self,
-        h=10,
-        w=16,
+        h=15,
+        w=24,
         wall_prob=0.12,
         seed=0,
         spawn_good=(1, 3),  # spawn between 1..3 good apples each step
@@ -81,9 +81,12 @@ class AppleWorld:
         # Apples: dict[(r,c)] = (type, ttl)
         self.apples = {}
         self.t = 0
+        self.good_eaten = 0
+        self.bad_eaten = 0
 
         # Place robot in an empty cell
         self.robot = self._random_empty_cell()
+        self.robot_dir = "RIGHT"  # initial direction
         return self.observe()
 
     def _random_empty_cell(self):
@@ -155,9 +158,8 @@ class AppleWorld:
         Rewards:
         - step cost: -0.05 (encourage efficiency)
         - bump wall: -0.75
-        - eat GOOD: +10
-        - eat BAD:  -10
-        - eat nothing: -0.4
+        - move to GOOD apple: +10 (auto-eat)
+        - move to BAD apple: -10 (auto-eat)
         """
         self.t += 1
         reward = -0.05
@@ -171,18 +173,20 @@ class AppleWorld:
                 reward -= 0.75
             else:
                 self.robot = (nr, nc)
+                # Update direction based on movement
+                if action in ("UP", "DOWN", "LEFT", "RIGHT"):
+                    self.robot_dir = action
 
-        elif action == "EAT":
-            pos = self.robot
-            if pos in self.apples:
-                kind, _ttl = self.apples[pos]
-                del self.apples[pos]
-                if kind == GOOD:
-                    reward += 10.0
-                else:
-                    reward -= 10.0
-            else:
-                reward -= 0.4
+                # Auto-eat apple if present at new position
+                if self.robot in self.apples:
+                    kind, _ttl = self.apples[self.robot]
+                    del self.apples[self.robot]
+                    if kind == GOOD:
+                        reward += 10.0
+                        self.good_eaten += 1
+                    else:
+                        reward -= 10.0
+                        self.bad_eaten += 1
 
         # Environment dynamics after action
         self._decay_apples()
@@ -194,6 +198,15 @@ class AppleWorld:
 
     def render(self):
         rr, rc = self.robot
+        # Map directions to arrow symbols
+        arrow_map = {
+            "UP": "↑",
+            "DOWN": "↓",
+            "LEFT": "←",
+            "RIGHT": "→"
+        }
+        robot_symbol = arrow_map.get(self.robot_dir, "→")
+
         lines = []
         for r in range(self.h):
             row = []
@@ -201,7 +214,7 @@ class AppleWorld:
                 if self.walls[r][c]:
                     row.append(ctext("#", GRAY))
                 elif (r, c) == (rr, rc):
-                    row.append(ctext("R", YELLOW))
+                    row.append(ctext(robot_symbol, YELLOW))
                 elif (r, c) in self.apples:
                     kind, _ttl = self.apples[(r, c)]
                     if kind == GOOD:
@@ -292,6 +305,10 @@ def run(
             print(
                 ctext("G=good apple (+10)", GREEN), " ", ctext("B=bad apple (-10)", RED)
             )
+            print(
+                f"Apples eaten - {ctext('Good: ' + str(env.good_eaten), GREEN)}  "
+                f"{ctext('Bad: ' + str(env.bad_eaten), RED)}"
+            )
             time.sleep(sleep)
 
     clear_screen()
@@ -299,6 +316,10 @@ def run(
     print("\nDone.")
     print(f"Final total reward: {total:.2f}")
     print(f"Final epsilon: {agent.epsilon:.3f}")
+    print(
+        f"Total apples eaten - {ctext('Good: ' + str(env.good_eaten), GREEN)}  "
+        f"{ctext('Bad: ' + str(env.bad_eaten), RED)}"
+    )
 
 
 if __name__ == "__main__":
