@@ -11,6 +11,7 @@ RED = "\033[31m"
 GRAY = "\033[90m"
 YELLOW = "\033[33m"
 CYAN = "\033[36m"
+WHITE = "\033[37m"
 
 
 def ctext(s: str, color: str) -> str:
@@ -44,8 +45,8 @@ def clamp(v, lo, hi):
 class AppleWorld:
     def __init__(
         self,
-        h=15,
-        w=24,
+        h=25,
+        w=50,
         wall_prob=0.12,
         seed=0,
         spawn_good=(1, 3),  # spawn between 1..3 good apples each step
@@ -199,12 +200,7 @@ class AppleWorld:
     def render(self):
         rr, rc = self.robot
         # Map directions to arrow symbols
-        arrow_map = {
-            "UP": "↑",
-            "DOWN": "↓",
-            "LEFT": "←",
-            "RIGHT": "→"
-        }
+        arrow_map = {"UP": "↑", "DOWN": "↓", "LEFT": "←", "RIGHT": "→"}
         robot_symbol = arrow_map.get(self.robot_dir, "→")
 
         lines = []
@@ -212,7 +208,7 @@ class AppleWorld:
             row = []
             for c in range(self.w):
                 if self.walls[r][c]:
-                    row.append(ctext("#", GRAY))
+                    row.append(ctext("#", WHITE))
                 elif (r, c) == (rr, rc):
                     row.append(ctext(robot_symbol, YELLOW))
                 elif (r, c) in self.apples:
@@ -222,7 +218,7 @@ class AppleWorld:
                     else:
                         row.append(ctext("B", RED))
                 else:
-                    row.append(".")
+                    row.append(ctext(".", GRAY))
             lines.append("".join(row))
         return "\n".join(lines)
 
@@ -325,7 +321,7 @@ def run(
 if __name__ == "__main__":
     run(
         steps=6000,  # train longer = better behavior
-        render_every=1,  # lower = more frequent redraw
-        sleep=0.25,  # animation speed
+        render_every=0.25,  # lower = more frequent redraw
+        sleep=0.1,  # animation speed
         seed=3,
     )
